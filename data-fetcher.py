@@ -25,10 +25,15 @@ def print_final_info(fields,layerPath):
     print(layerPath," is now wirtten!")
 
 def write_status_to_file(fields):
+    updateTime = datetime.now()
+    updateDate = updateTime.strftime("%A %d/%m/%Y @ %I:%M%p")
+    fields.append(updateDate)
     with open(r'Data-Encoding-Status-CSV.csv', 'a') as f:
         writer = csv.writer(f)
         writer.writerow(fields)
     print("Status updated for ",fields[0])
+
+
 
 # ==> Start here
 file_name = input("Enter file path: ")
@@ -51,27 +56,34 @@ try:
 
     # get layer discription 
     description = input("File description:")
-    fileType = input("File type: ")
+    fileType = input("File type(CHA): ")
+    if (fileType == ''): fileType = 'Controlled Hunted Area'
     
     typeOfData = 'Vector'
     owner = 'Ethiopian Wildlife Conservation Agency'
     typeOfSurvey = 'From local database'
 
     # get geographical information
-    geographicalCoverage = input("Geographical Coverage: ")
+    geographicalCoverage = input("Geographical Coverage: (regional) ")
+    if geographicalCoverage == '': geographicalCoverage = 'regional'
+    
     # convert the timestamp in seconds to a datetime date format (Month-Date-Year)
     file_updatedOn = datetime.fromtimestamp(time_stamp).strftime("%m/%d/%Y") 
     print("File Last Modified On: " , file_updatedOn)
    
     # get spacial refernce number
-    spacialReference = input("Spacial Reference(numbers only): ")
-    spacialReference = 'EPSG:' + spacialReference
+    sref = input("Spacial Reference(32367): ")
+    if (sref == ''): sref = 32637
+    spacialReference = 'EPSG:' + str(sref)
+
+    # get comments for the layer
     comments = input("Comments: ")
+
     updateRate = 'N/A'
     dataLicence = 'N/A'
     metaDataLink = 'N/A'
     linkToOCG = 'N/A'
-    spatialDataTheme = 'N/A'    
+    spatialDataTheme = ''    
     spatialAccuracy = 'N/A'
     category = 'BASIC'
     fileName_identifier = final_layer_name
