@@ -12,6 +12,7 @@ from datetime import datetime
 from os import listdir
 from os.path import isfile, join
 import glob
+
 # Fields 
 # updateRate = ''
 # dataLicence = ''
@@ -25,6 +26,8 @@ def print_final_info(fields,layerPath):
         print(field)
     print(layerPath," is now wirtten!")
 
+# Write file encoding status to 
+# Data-Encoding-Status.csv file
 def write_status_to_file(fields):
     updateTime = datetime.now()
     updateDate = updateTime.strftime("%A %d/%m/%Y @ %I:%M%p")
@@ -34,32 +37,42 @@ def write_status_to_file(fields):
         writer.writerow(fields)
     print("Status updated for ",fields[0])
 
-def write_to_custom_file(fileName,fields):
+# Writes file encoding status of
+# PDF,JPG and PNG files to PDF-File-Status.csv
+def write_to_custom_file(fields):
     updateTime = datetime.now()
     updateDate = updateTime.strftime("%A %d/%m/%Y @ %I:%M%p")
     fields.append(updateDate)
-    with open(r"${fileName}", 'a') as f:
+    with open(r"PDF_Files_status.csv", 'a') as f:
         writer = csv.writer(f)
         writer.writerow(fields)
     print("Status updated for ",fields[0])
 
-def getFileInf(filePath):
-    try:
-        file_name = input("Enter file path: ")
-        data_file = pathlib.Path(file_name)
-        assert data_file.exists(), f'No such file: {data_file}'
+# Get relative path of a file and its name
+# @returns file name and relative path of file from 'Rabra' directory
+def getFileNamePath(filePath):
+    data_file = pathlib.Path(filePath)
+    assert data_file.exists(), f'No such file: {data_file}'
+    # get layer PATH RELATIVE ONLY
+    layerPath = filePath.split('Rabra/')[1]
+    # get layer name
+    pathLayer = layerPath.split('/')
+    final_layer_name = pathLayer[len(pathLayer) - 1]
+    return (final_layer_name,layerPath)
 
+# Get file information and write to 
+# two csv files
+def getFileInfo(filePath):
+    try:
+        absolute_file_path = getFileNamePath(filePath)
+        final_layer_name = absolute_file_path[0]
+        layerPath = absolute_file_path[1]
+        print(final_layer_name)
+        print(layerPath)
+
+        data_file = pathlib.Path(filePath)
         # get last modification date of the file
         time_stamp = data_file.stat().st_mtime
-        
-        layerPath = file_name.split('Rabra/')[1]
-        print(layerPath)
-        # get layer name
-        # fileName_delimiter = input("File name delimiter: ")
-        pathLayer = layerPath.split('/')
-        final_layer_name = pathLayer[len(pathLayer) - 1]
-        print(final_layer_name)
-
         # get layer discription 
         description = input("File description:")
         fileType = input("File type(CHA): ")
@@ -111,7 +124,7 @@ def getFileInf(filePath):
         print("Unable to locate file! Please try again.")
         quit()
 
-
+# Write duplicate status of file
 def wirte_duplicate_file(filePath,comment):
     try:
         data_file = pathlib.Path(filePath)
@@ -122,8 +135,8 @@ def wirte_duplicate_file(filePath,comment):
         
         layerPath = filePath.split('Rabra/')[1]
         print(layerPath)
+
         # get layer name
-        # fileName_delimiter = input("File name delimiter: ")
         pathLayer = layerPath.split('/')
         final_layer_name = pathLayer[len(pathLayer) - 1]
         print(final_layer_name)
@@ -179,20 +192,53 @@ def wirte_duplicate_file(filePath,comment):
         print("Unable to locate file! Please try again.")
         quit()
 
-# ==> Start here
+# recursively write duplicate file status
+def write_duplicate_status(paths,error_message):
+    shapeFiles = glob.glob(paths)
+    for file in shapeFiles:
+        wirte_duplicate_file(file,error_message)
 
+def write_non_spatail_file_status(paths,file_ext):
+    filePaths = paths + '*.' + file_ext
+    pdfFiles = glob.glob(filePaths,recursive=True)
+    # status_fields = [fileName_identifier,layerPath,fileType,owner,"Done"]
+    fileType = "Parks and Protected Areas"
+    owner="Ethiopian Wildlife Conservation Agency"
+    
+    for file in pdfFiles:
+        filePathInfo = getFileNamePath(file)
+        fileName_identifier = filePathInfo[0]
+        fileName_path = filePathInfo[1]
+        print(fileName_identifier)
+        print(fileName_path)
+        status_fields=[fileName_identifier,fileName_path,fileType,owner,file_ext,"Done"]
+        write_to_custom_file(status_fields)
+
+def write_spatial_file_status(paths):
+    shpFiles = glob.glob(paths,recursive=True)
+    total = len(shpFiles)
+    count = 0
+    for shapeFile in shpFiles:
+        print("Fetching Info for :")
+        print(shapeFile)
+        getFileInfo(shapeFile)
+        count = count + 1
+        print("Progress:  " + str(count) + "/" + str(total) + " completed" )
+
+
+# ==> Start here
 
 def main():
     """
     starting point of the script
     """
-    mypath='/home/eensat-client21/Desktop/Rabra/ECWA/EWCA_Protected_Areas/National Park_abiy/Awash/Awash_ArcMap/shapes/*.shp'
+    mypath='/home/eensat-client21/Desktop/Rabra/ECWA/EWCA_Protected_Areas/National Park_abiy/Gambella/**/*.shp'
     # onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
     # for files in onlyfiles:
     #     print(files)
-    shapeFiles = glob.glob(mypath)
-    for file in shapeFiles:
-        wirte_duplicate_file(file,"DUPLICATE FILE found in Awash_ArchMap/Awash_ArchMap/shapes")
+    # write_non_spatail_file_status(mypath,'jpeg')
+    write_spatial_file_status(mypath)
+
 
 if __name__=="__main__":
     main()
