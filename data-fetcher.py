@@ -1,8 +1,10 @@
 #!/usr/bin/python3
+
 # Data Fetcher
 # A simple script to get shape file info and write to a csv file
 # written by rabra
 # date Jan 16,2021
+# updated on Jan 26,2021
 
 import sys
 import csv   
@@ -20,6 +22,9 @@ import glob
 # linkToOCG = ''
 # spatialDataTheme = ''
 # spatialAccuracy = ''
+
+
+written_files = []  
 
 def print_final_info(fields,layerPath):
     for field in fields:
@@ -67,8 +72,10 @@ def getFileInfo(filePath):
         absolute_file_path = getFileNamePath(filePath)
         final_layer_name = absolute_file_path[0]
         layerPath = absolute_file_path[1]
-        print(final_layer_name)
-        print(layerPath)
+        print("File name: ",final_layer_name)
+        print("Relative Path: \n",layerPath)
+        if final_layer_name in written_files:
+            return (print("File already written!!"))
 
         data_file = pathlib.Path(filePath)
         # get last modification date of the file
@@ -116,6 +123,63 @@ def getFileInfo(filePath):
             writer = csv.writer(f)
             writer.writerow(fields)
         status_fields = [fileName_identifier,layerPath,fileType,owner,"Done"]
+
+        # Print Info messages
+        print_final_info(fields,layerPath)
+        # wirte to shape rows files
+        write_status_to_file(status_fields)
+    except:
+        print("Unable to locate file! Please try again.")
+        quit()
+
+# Write INVALID/NON SPECIFIED info to a file
+def getNonSpecifiedFileInfo(filePath):
+    status = 'NOT AVAILABLE'
+    try:
+        absolute_file_path = getFileNamePath(filePath)
+        final_layer_name = absolute_file_path[0]
+        layerPath = absolute_file_path[1]
+        print("File name: ",final_layer_name)
+        print("Relative Path: \n",layerPath)
+
+        data_file = pathlib.Path(filePath)
+        # get last modification date of the file
+        time_stamp = data_file.stat().st_mtime
+        # get layer discription 
+        description = status
+        fileType = status        
+        typeOfData = status
+        owner = 'Ethiopian Wildlife Conservation Agency'
+        typeOfSurvey = 'From local database'
+
+        # get geographical information
+        geographicalCoverage = status
+        
+        # convert the timestamp in seconds to a datetime date format (Month-Date-Year)
+        file_updatedOn = datetime.fromtimestamp(time_stamp).strftime("%m/%d/%Y") 
+        print("File Last Modified On: " , file_updatedOn)
+    
+        # get spacial refernce number
+        spacialReference = status
+
+        # get comments for the layer
+        comments = status
+        updateRate = 'N/A'
+        dataLicence = 'N/A'
+        metaDataLink = 'N/A'
+        linkToOCG = 'N/A'
+        spatialDataTheme = ''    
+        spatialAccuracy = 'N/A'
+        category = 'BASIC'
+        fileName_identifier = final_layer_name
+        
+
+        # Write to csv file
+        fields=[fileName_identifier,description,typeOfData,owner,typeOfSurvey,geographicalCoverage,file_updatedOn,updateRate,dataLicence,metaDataLink,linkToOCG,spacialReference,spatialAccuracy,comments,fileName_identifier,category,spatialDataTheme]
+        with open(r'shape_rows.csv', 'a') as f:
+            writer = csv.writer(f)
+            writer.writerow(fields)
+        status_fields = [fileName_identifier,layerPath,fileType,owner,"Incomplete!"]
 
         # Print Info messages
         print_final_info(fields,layerPath)
@@ -223,7 +287,22 @@ def write_spatial_file_status(paths):
         print(shapeFile)
         getFileInfo(shapeFile)
         count = count + 1
-        print("Progress:  " + str(count) + "/" + str(total) + " completed" )
+        progress = (count/total) * 100
+        result = round(progress,2)
+        print("Progress:  " + str(count) + "/" + str(total) + "(" + str(result) + "%)" + " completed" )
+
+def write_non_descirptive_files(paths):
+    shpFiles = glob.glob(paths,recursive=True)
+    total = len(shpFiles)
+    count = 0
+    for shapeFile in shpFiles:
+        print("Fetching Info for :")
+        print(shapeFile)
+        getNonSpecifiedFileInfo(shapeFile)
+        count = count + 1
+        progress = (count/total) * 100
+        result = round(progress,2)
+        print("Progress:  " + str(count) + "/" + str(total) + "(" + str(result) + "%)" + " completed" )
 
 
 # ==> Start here
@@ -232,13 +311,26 @@ def main():
     """
     starting point of the script
     """
+
+    # opens written file status and get the list of files
+    # that are already encoded (shp files only)
+    with open("shape_rows.csv",'r') as f:
+        csv_reader = csv.reader(f, delimiter=',')
+        for row in csv_reader:
+            written_files.append(row[0])
+
+    written_files.pop(0)
+    
     mypath='/home/eensat-client21/Desktop/Rabra/ECWA/EWCA_Protected_Areas/National Park_abiy/Gambella/**/*.shp'
-    # onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
-    # for files in onlyfiles:
-    #     print(files)
+    
+    #nonDescriptiveFiles = '/home/eensat-client21/Desktop/Rabra/ECWA/EWCA_Protected_Areas/National Park_abiy/Gambella/GAMBELLAsurveys/Gambella_2009/Shapes/10km/*.shp'
+
     # write_non_spatail_file_status(mypath,'jpeg')
+    # write_non_descirptive_files(nonDescriptiveFiles)
     write_spatial_file_status(mypath)
 
 
 if __name__=="__main__":
     main()
+
+    
