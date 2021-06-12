@@ -18,8 +18,10 @@ def read_shape_file(file_path):
 def write_csv_file(fields,name):
     file_name= str(name) + '_all_towns.csv'
     with open(f"{file_name}", 'a') as f:
-        writer = csv.writer(f)
-        writer.writerow(fields)
+        # writer = csv.writer(f,lineterminator='\n')
+        # writer.writerow()
+        f.write("\n".join(fields))
+
     print(file_name, ' Towns Saved!!!--------------------')
 
 def get_distance_points(era_point, gii_point):
@@ -32,11 +34,11 @@ def get_distance_points(era_point, gii_point):
 def get_distance_for_all_points(era_towns,gii_towns):
     all_era_towns,all_gii_towns = [],[]
     for era_town in era_towns.iterrows():
-        all_era_towns.append(era_town[1][3])
+        all_era_towns.append(era_town[1][2])
         # print(era_town[1][2]) # ERA town name
     write_csv_file(all_era_towns,'era');
     for gii_town in gii_towns.iterrows():
-        all_gii_towns.append(gii_town[1][22]);
+        all_gii_towns.append(gii_town[1][3]);
     write_csv_file(all_gii_towns,'gii')
 
         # print(gii_town[1][22]) # GII town name
@@ -58,8 +60,8 @@ def get_distance_for_all_points(era_towns,gii_towns):
 def main():
     print("Starting script...")
     # newdata = gpd.GeoDataFrame() # empty geodat frame
-    gii_towns_path = "/home/eensat-client21/Desktop/Rabra/geopada-quickstart/Ethio_Towns-geojson.geojson"
-    era_towns_path = "/home/eensat-client21/Desktop/Rabra/geopada-quickstart/Et_Towns-geojson.geojson"
+    gii_towns_path = "./Rabra/geopada-quickstart/Ethio_Towns-geojson.geojson"
+    era_towns_path = "./Rabra/geopada-quickstart/Et_Towns-geojson.geojson"
     gii_towns = read_shape_file(gii_towns_path)
     era_towns = read_shape_file(era_towns_path)
     
